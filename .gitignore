@@ -1,0 +1,8 @@
+.ruby-version
+*.gem
+.bundle/
+Gemfile.lock
+pkg/
+tmp/
+coverage/
+.rspec_status
