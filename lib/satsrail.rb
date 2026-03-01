@@ -12,6 +12,8 @@ require_relative "satsrail/resources/wallets"
 require_relative "satsrail/resources/checkout_sessions"
 require_relative "satsrail/resources/webhooks"
 require_relative "satsrail/resources/merchant"
+require_relative "satsrail/resources/catalog"
+require_relative "satsrail/resources/subscription_plans"
 require_relative "satsrail/client"
 
 module SatsRail

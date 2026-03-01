@@ -8,10 +8,9 @@ module SatsRail
       end
 
       def create(**params)
-        order_keys = %i[total_amount_cents currency items metadata]
-        order_body = params.select { |k, _| order_keys.include?(k) }
-        top_keys = %i[generate_invoice payment_method]
+        top_keys = %i[generate_invoice payment_method mark_as_paid required_confirmations]
         top_body = params.select { |k, _| top_keys.include?(k) }
+        order_body = params.reject { |k, _| top_keys.include?(k) }
         create_request({ order: order_body }.merge(top_body))
       end
 

@@ -4,7 +4,9 @@ module SatsRail
   module Resources
     class PaymentRequests < BaseResource
       def create(**params)
-        create_request(params)
+        idempotency_key = params.delete(:idempotency_key)
+        headers = idempotency_key ? { "Idempotency-Key" => idempotency_key } : {}
+        @http.post(resource_path, { payment_request: params }, headers: headers)
       end
 
       def retrieve(id)

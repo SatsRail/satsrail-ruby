@@ -18,19 +18,21 @@ module SatsRail
       execute(uri, request)
     end
 
-    def post(path, body = {})
+    def post(path, body = {}, headers: {})
       uri = build_uri(path)
       request = Net::HTTP::Post.new(uri)
       request.body = JSON.generate(body)
       request["Content-Type"] = "application/json"
+      headers.each { |k, v| request[k] = v }
       execute(uri, request)
     end
 
-    def patch(path, body = {})
+    def patch(path, body = {}, headers: {})
       uri = build_uri(path)
       request = Net::HTTP::Patch.new(uri)
       request.body = JSON.generate(body)
       request["Content-Type"] = "application/json"
+      headers.each { |k, v| request[k] = v }
       execute(uri, request)
     end
 
