@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "satsrail"
   spec.version = SatsRail::VERSION
   spec.authors = ["SatsRail"]
-  spec.email = ["support@satsrail.com"]
+  spec.email = ["hello@satsrail.com"]
   spec.summary = "Ruby SDK for the SatsRail Bitcoin payment API"
   spec.description = "Accept Bitcoin payments via Lightning Network, on-chain, and USDT. Zero dependencies."
   spec.homepage = "https://github.com/satsrail/satsrail-ruby"

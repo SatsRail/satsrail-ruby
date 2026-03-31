@@ -1,4 +1,4 @@
-# SatsRail Ruby SDK — CLAUDE.md
+# SatsRail Ruby SDK — AGENTS.md
 
 Official Ruby SDK for the SatsRail Bitcoin payment API. Zero dependencies.
 
