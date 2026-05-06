@@ -3,7 +3,7 @@
 [![Gem Version](https://img.shields.io/gem/v/satsrail.svg)](https://rubygems.org/gems/satsrail)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Official Ruby SDK for the [SatsRail](https://satsrail.com) Bitcoin payment API. Accept Bitcoin payments via Lightning Network, on-chain, and USDT with zero dependencies.
+Official Ruby SDK for the [SatsRail](https://www.satsrail.com/) Bitcoin payment API. Accept Bitcoin payments via Lightning Network, on-chain, and USDT with zero dependencies.
 
 ## Installation
 
