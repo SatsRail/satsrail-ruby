@@ -26,7 +26,7 @@ module SatsRail
       private
 
       def resource_path
-        "/webhooks"
+        ApiPath.m("/webhooks")
       end
     end
   end

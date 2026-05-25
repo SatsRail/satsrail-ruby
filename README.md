@@ -1,6 +1,7 @@
 # SatsRail Ruby SDK
 
 [![Gem Version](https://img.shields.io/gem/v/satsrail.svg)](https://rubygems.org/gems/satsrail)
+[![Tests](https://github.com/SatsRail/satsrail-ruby/actions/workflows/test.yml/badge.svg)](https://github.com/SatsRail/satsrail-ruby/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Official Ruby SDK for the [SatsRail](https://www.satsrail.com/) Bitcoin payment API. Accept Bitcoin payments via Lightning Network, on-chain, and USDT with zero dependencies.
@@ -101,7 +102,8 @@ order = client.orders.create(
   total_amount_cents: 5000,
   currency: "usd",
   items: [{ name: "Widget", price_cents: 5000, qty: 1 }],
-  metadata: { order_ref: "PO-12345" }
+  metadata: { order_ref: "PO-12345" },
+  idempotency_key: "order-PO-12345" # optional — dedupes within 24h
   # generate_invoice: true,       — auto-generate invoice
   # payment_method: "lightning",
 )
@@ -117,7 +119,7 @@ order = client.orders.retrieve("order_id", expand: "invoice,payment")
 # Update
 updated = client.orders.update("order_id", metadata: { note: "updated" })
 
-# Cancel
+# Cancel (alias: client.orders.cancel("order_id"))
 client.orders.delete("order_id")
 ```
 
@@ -129,7 +131,9 @@ Generate and track invoices for orders.
 # Generate an invoice for an order
 invoice = client.invoices.generate(
   order_id: "order_id",
-  payment_method: "lightning" # "lightning" | "onchain" | "usdt"
+  payment_method: "lightning",       # "lightning" | "onchain" | "usdt"
+  required_confirmations: 1,         # on-chain only (1-6)
+  idempotency_key: "invoice-1234"    # optional
 )
 
 # Retrieve
@@ -138,8 +142,8 @@ inv = client.invoices.retrieve("invoice_id")
 # Check status
 status = client.invoices.status("invoice_id")
 
-# Get QR code
-qr = client.invoices.qr("invoice_id")
+# Get QR code (returns SVG string)
+svg = client.invoices.qr("invoice_id")
 ```
 
 ### Payments (read-only)
@@ -167,7 +171,8 @@ Unified API for Lightning/Bitcoin/USDT payments.
 # Create
 pr = client.payment_requests.create(
   amount_cents: 1000,
-  payment_method: "lightning"
+  payment_method: "lightning",
+  idempotency_key: "pr-tip-1234" # optional
 )
 
 # Retrieve
@@ -214,18 +219,100 @@ client.webhooks.delete("webhook_id")
 
 ### Merchant
 
-Access authenticated merchant data.
+```ruby
+me = client.merchant.retrieve
+```
+
+To list a merchant's orders or payments, use `client.orders.list` and `client.payments.list` — they're already scoped to the authenticated merchant.
+
+### Products
+
+Products power the encrypted-content delivery flow. Identifiers accept both UUIDs and slugs.
 
 ```ruby
-# Get merchant profile
-me = client.merchant.retrieve
+# CRUD
+products = client.products.list
+product  = client.products.retrieve("backup-pack-2026") # slug or UUID
+created  = client.products.create(name: "Backup pack", price_cents: 10_000)
+updated  = client.products.update("backup-pack-2026", price_cents: 12_000)
+client.products.delete("backup-pack-2026")
 
-# List merchant orders
-orders = client.merchant.list_orders(page: 1)
-
-# List merchant payments
-payments = client.merchant.list_payments(page: 1)
+# Encryption keys (sk_live_ only)
+key      = client.products.get_key("backup-pack-2026")     # { "key" => "..." }
+rotation = client.products.rotate_key("backup-pack-2026")  # { "old_key" => "...", "new_key" => "..." }
+client.products.clear_old_key("backup-pack-2026")          # finalise rotation
 ```
+
+### Product Types
+
+```ruby
+types = client.product_types.list
+type  = client.product_types.retrieve("pt_id")
+client.product_types.create(name: "Channel")
+client.product_types.update("pt_id", name: "Channel v2")
+client.product_types.delete("pt_id")
+```
+
+### Merchant Documents (read-only)
+
+```ruby
+docs = client.merchant_documents.list
+doc  = client.merchant_documents.retrieve("doc_id")
+```
+
+Uploads and deletions are admin operations and are intentionally not exposed in this SDK.
+
+### Access Verification
+
+Server-to-server verification of a customer's macaroon access token. Used by content-delivery clients to gate access after payment. Requires `sk_live_`.
+
+```ruby
+result = client.access.verify("macaroon_v2_...")
+# result["valid"]              => true / false
+# result["remaining_seconds"]  => 3600
+# result["product_id"]         => "pr_..." (on confirmed payment)
+# result["order_id"]           => "ord_..."
+# result["encryption_key"]     => "..."
+# result["key_fingerprint"]    => "..."
+```
+
+### Subscription Plans (public)
+
+Hits the public `/pub/subscription_plans` endpoint — no auth required, but the SDK sends the key anyway for consistency.
+
+```ruby
+plans = client.subscription_plans.list
+```
+
+### API Token Usage
+
+```ruby
+usage = client.api_tokens.usage("tok_id")
+# usage["rpm_limit"], usage["current_rpm"], usage["monthly_request_count"]
+```
+
+## Idempotency
+
+The portal honors `Idempotency-Key` on three endpoints — order creation, invoice generation, and payment request creation. Pass `idempotency_key:` to any of them:
+
+```ruby
+client.orders.create(total_amount_cents: 5000, idempotency_key: "order-PO-123")
+client.invoices.generate(order_id: "ord_1", idempotency_key: "invoice-PO-123")
+client.payment_requests.create(amount_cents: 5000, idempotency_key: "pr-tip-1")
+```
+
+Keys dedupe within a 24-hour window. The portal returns the original response for repeat calls.
+
+## Metadata
+
+Anywhere the API accepts a `metadata:` hash, the SDK validates it client-side against the portal's `HasMetadata` concern before sending. Invalid metadata raises `ArgumentError` immediately rather than bouncing off a 422.
+
+| Constraint | Limit |
+|---|---|
+| Maximum number of keys | 50 |
+| Maximum key length | 40 characters |
+| Maximum value length | 500 characters |
+| Value type | Anything stringifiable — values are stored as strings |
 
 ## Error Handling
 

@@ -6,6 +6,12 @@ require "json"
 
 module SatsRail
   class HttpClient
+    SVG_CONTENT_TYPE = "image/svg+xml"
+
+    def self.idempotency_headers(key)
+      key ? { "Idempotency-Key" => key.to_s } : {}
+    end
+
     def initialize(api_key:, base_url:, timeout:)
       @api_key = api_key
       @base_url = base_url.chomp("/")
@@ -14,8 +20,7 @@ module SatsRail
 
     def get(path, params = {})
       uri = build_uri(path, params)
-      request = Net::HTTP::Get.new(uri)
-      execute(uri, request)
+      execute(uri, Net::HTTP::Get.new(uri))
     end
 
     def post(path, body = {}, headers: {})
@@ -38,8 +43,7 @@ module SatsRail
 
     def delete(path)
       uri = build_uri(path)
-      request = Net::HTTP::Delete.new(uri)
-      execute(uri, request)
+      execute(uri, Net::HTTP::Delete.new(uri))
     end
 
     private
@@ -66,13 +70,32 @@ module SatsRail
 
     def handle_response(response)
       status = response.code.to_i
-      body = response.body && !response.body.empty? ? JSON.parse(response.body) : nil
+
+      # 204 No Content — DELETE endpoints return this on success.
+      return nil if status == 204
+
+      content_type = response["Content-Type"].to_s
+      body_text = response.body.to_s
+
+      # QR endpoints return image/svg+xml. Return the raw SVG string so the
+      # caller can stream it to a browser or write it to disk.
+      if content_type.include?(SVG_CONTENT_TYPE)
+        return body_text if status >= 200 && status < 300
+
+        raise Error.new("HTTP #{status}", status: status)
+      end
+
+      body = body_text.empty? ? nil : parse_json(body_text, status)
 
       if status >= 200 && status < 300
         body
       else
         raise Error.from_response(status, body || {})
       end
+    end
+
+    def parse_json(text, status)
+      JSON.parse(text)
     rescue JSON::ParserError
       raise Error.new("Invalid JSON response", status: status)
     end

@@ -4,11 +4,11 @@ module SatsRail
   module Resources
     class Catalog < BaseResource
       def retrieve
-        @http.get("/catalog")
+        @http.get(ApiPath.m("/catalog"))
       end
 
       def version
-        @http.get("/catalog/version")
+        @http.get(ApiPath.m("/catalog/version"))
       end
     end
   end

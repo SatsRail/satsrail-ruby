@@ -10,7 +10,7 @@ module SatsRail
       private
 
       def resource_path
-        "/subscription_plans"
+        ApiPath.pub("/subscription_plans")
       end
     end
   end

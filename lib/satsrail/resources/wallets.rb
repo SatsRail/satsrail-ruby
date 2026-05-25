@@ -14,7 +14,7 @@ module SatsRail
       private
 
       def resource_path
-        "/wallets"
+        ApiPath.m("/wallets")
       end
     end
   end

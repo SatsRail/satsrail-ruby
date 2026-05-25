@@ -3,15 +3,19 @@
 module SatsRail
   module Resources
     class Orders < BaseResource
+      # Keys that sit at the top of the request body, not inside `order: {...}`.
+      # These are request-level flags rather than order attributes.
+      TOP_LEVEL_KEYS = %i[generate_invoice payment_method mark_as_paid required_confirmations].freeze
+
       def list(**params)
         list_request(params)
       end
 
-      def create(**params)
-        top_keys = %i[generate_invoice payment_method mark_as_paid required_confirmations]
-        top_body = params.select { |k, _| top_keys.include?(k) }
-        order_body = params.reject { |k, _| top_keys.include?(k) }
-        create_request({ order: order_body }.merge(top_body))
+      def create(idempotency_key: nil, **params)
+        Metadata.validate!(params[:metadata]) if params.key?(:metadata)
+        top, attrs = params.partition { |k, _| TOP_LEVEL_KEYS.include?(k) }.map(&:to_h)
+        body = { order: attrs }.merge(top)
+        @http.post(resource_path, body, headers: HttpClient.idempotency_headers(idempotency_key))
       end
 
       def retrieve(id, **params)
@@ -19,6 +23,7 @@ module SatsRail
       end
 
       def update(id, **params)
+        Metadata.validate!(params[:metadata]) if params.key?(:metadata)
         update_request(id, { order: params })
       end
 
@@ -26,10 +31,12 @@ module SatsRail
         delete_request(id)
       end
 
+      alias cancel delete
+
       private
 
       def resource_path
-        "/orders"
+        ApiPath.m("/orders")
       end
     end
   end

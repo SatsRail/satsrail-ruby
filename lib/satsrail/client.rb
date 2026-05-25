@@ -4,7 +4,8 @@ module SatsRail
   class Client
     attr_reader :orders, :invoices, :payments, :payment_requests,
                 :wallets, :checkout_sessions, :webhooks, :merchant,
-                :catalog, :subscription_plans, :products, :api_tokens
+                :merchant_documents, :catalog, :subscription_plans,
+                :products, :product_types, :api_tokens, :access
 
     def initialize(api_key: nil, base_url: nil, timeout: nil)
       config = SatsRail.configuration
@@ -25,10 +26,13 @@ module SatsRail
       @checkout_sessions = Resources::CheckoutSessions.new(http)
       @webhooks = Resources::Webhooks.new(http)
       @merchant = Resources::Merchant.new(http)
+      @merchant_documents = Resources::MerchantDocuments.new(http)
       @catalog = Resources::Catalog.new(http)
       @subscription_plans = Resources::SubscriptionPlans.new(http)
       @products = Resources::Products.new(http)
+      @product_types = Resources::ProductTypes.new(http)
       @api_tokens = Resources::ApiTokens.new(http)
+      @access = Resources::Access.new(http)
     end
   end
 end

@@ -16,9 +16,11 @@ Gem::Specification.new do |spec|
   spec.metadata = {
     "homepage_uri" => spec.homepage,
     "source_code_uri" => spec.homepage,
-    "documentation_uri" => "https://docs.satsrail.com"
+    "documentation_uri" => "https://docs.satsrail.com",
+    "changelog_uri" => "#{spec.homepage}/blob/main/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*.rb"] + ["README.md", "LICENSE", "satsrail.gemspec"]
+  spec.files = Dir["lib/**/*.rb"] + ["README.md", "LICENSE", "CHANGELOG.md", "satsrail.gemspec"]
   spec.require_paths = ["lib"]
 end

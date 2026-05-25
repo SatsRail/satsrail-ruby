@@ -2,7 +2,7 @@
 
 module SatsRail
   module Resources
-    class CheckoutSessions < BaseResource
+    class ProductTypes < BaseResource
       def list(**params)
         list_request(params)
       end
@@ -12,14 +12,21 @@ module SatsRail
       end
 
       def create(**params)
-        Metadata.validate!(params[:metadata]) if params.key?(:metadata)
-        create_request({ checkout_session: params })
+        create_request({ product_type: params })
+      end
+
+      def update(id, **params)
+        update_request(id, { product_type: params })
+      end
+
+      def delete(id)
+        delete_request(id)
       end
 
       private
 
       def resource_path
-        ApiPath.m("/checkout_sessions")
+        ApiPath.m("/product_types")
       end
     end
   end
