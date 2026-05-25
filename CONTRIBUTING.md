@@ -10,6 +10,12 @@ This gem is a thin Ruby wrapper over the SatsRail HTTP API. It does not implemen
 - Every resource declares its `resource_path` via `ApiPath.m("/...")` (merchant, `sk_*` / `pk_*` auth) or `ApiPath.pub("/...")` (public/embed) — never raw strings. The wrong namespace fails silently with a 404. Refer to the portal's `config/routes.rb` for the authoritative path list.
 - HTTP transport, error handling, and headers are centralised in `lib/satsrail/http_client.rb`.
 
+## Hard rule: no admin endpoints
+
+This SDK only targets `/m/` and `/pub/`. Never `/admin/`. Admin routes are operator-only (`ak_*` tokens, cross-merchant access, audit-tracked lifecycle ops) and are not part of the public API contract. If a merchant-facing capability is currently admin-only, the right fix is a new `/m/` route in the portal — not an SDK call into `/admin/`.
+
+PRs that wrap an admin operation will be closed. See `docs/portal/api-namespaces.md` in the parent monorepo for the full rationale.
+
 ## Local development
 
 ```bash
